@@ -1,3 +1,7 @@
+#claude
+.claude
+.agents
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -179,3 +183,24 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# ============================================================
+# Proyecto ESA-ADB Trustworthy Agent
+# ============================================================
+
+# --- Dataset crudo de Zenodo (~3.8 GB) — NUNCA al repo público ---
+# Se ignora todo data/ EXCEPTO los scores cacheados (D9) y el README de descarga.
+/data/*
+!/data/cached_scores/
+!/data/README.md
+# Artefactos intermedios del preproceso (se regeneran)
+preprocessed/
+
+# --- Código de referencia de ESA-ADB (clon local MIT) ---
+# No se republica su repo dentro del nuestro (D10: citar, no forkear).
+# Lo mínimo necesario se vendoriza en src/ con atribución.
+/source/
+
+# --- macOS ---
+.DS_Store
+**/.DS_Store
