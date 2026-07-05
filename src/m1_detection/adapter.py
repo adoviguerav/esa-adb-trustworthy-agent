@@ -1,8 +1,9 @@
-"""Adapter: reproduced detector output (``repro/``) -> DetectionResult (D7).
+"""Adapter: cached detector output -> DetectionResult (D7).
 
-Skeleton only. GLUE ONLY when implemented — read ``repro`` scores/data and pack them
-into the D7 contract. No detection logic here.
+Skeleton — deferred to M2 planning (needs the D7 contract + the continuous score).
+GLUE ONLY when implemented: read data/cached/ scores + the test CSV and pack them into
+the D7 contract for [2][3][4]. No detection logic here.
 """
 from __future__ import annotations
 
-# TODO [1]: load_detection_result(scores_path, test_csv) -> DetectionResult.
+# TODO (M2): load_detection_result(scores_test, test_csv) -> DetectionResult.

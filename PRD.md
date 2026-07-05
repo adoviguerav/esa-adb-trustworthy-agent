@@ -44,7 +44,7 @@ Un agente que, sobre el dataset oficial ESA-ADB, detecta anomalías en telemetr�
 
 **Detección [1]**
 - [ ] Carga Misión2 subconjunto ligero (canales 18-28) desde datos oficiales de Zenodo.
-- [ ] Windowed Extended Isolation Forest (librería `eif`, CPU) corre en Mac sin GPU/Docker y produce score por ventana.
+- [ ] Windowed iForest (`subsequence_if`, Isolation Forest estándar vía `pyod`, CPU) corre en Mac sin GPU/Docker y produce score por ventana.
 - [ ] Métrica F0.5 event-wise reportada y comparable al baseline publicado por ESA (referencia: 0.949).
 - [ ] Detector detrás de interfaz fija `scores + ventana + datos` (D7), intercambiable.
 
@@ -52,6 +52,10 @@ Un agente que, sobre el dataset oficial ESA-ADB, detecta anomalías en telemetr�
 - [ ] Score crudo convertido en confianza calibrada (conformal/MAPIE o MC-dropout/quantile).
 - [ ] Métrica de calibración reportada.
 - [ ] Salida = etiqueta 0/1 + confianza C + banda U.
+
+> **Decisiones abiertas para el plan de M2** (surgidas al cerrar M1):
+> 1. **Score continuo.** El detector `subsequence_if` emite 0/1 (`predict`), inservible para calibrar. M2 necesita el score **continuo** (`decision_function` del mismo modelo entrenado ya cacheado en `data/cached/model.pkl`). Decidir: generar y cachear `scores_test_continuous` + `scores_train_continuous` (calibración) como primer paso de M2. Es glue nuestro, no toca código de ESA.
+> 2. **Contrato D7 + adapter.** Definir `DetectionResult` (scores + ventana + datos + labels) en `src/interfaces.py` y rellenar `src/m1_detection/adapter.py` para exponerlo a [2][3][4]. Hoy stubs; se concreta cuando M2 fije qué necesita.
 
 **Explicabilidad [3]**
 - [ ] Atribución por canal (contribución por feature) por cada detección.
@@ -73,7 +77,7 @@ Un agente que, sobre el dataset oficial ESA-ADB, detecta anomalías en telemetr�
 
 | # | Feature | Qué hace | Quién usa | Datos que necesita | Fallback si falla |
 |---|---|---|---|---|---|
-| 1 | Ingesta + detector modular | Carga M2 ligero, corre windowed EIF (`eif`), emite score por ventana tras interfaz fija D7 | Autor (pipeline) | CSV Zenodo M2 canales 18-28 | Scores cacheados en repo (D9) |
+| 1 | Ingesta + detector modular | Carga M2 ligero, corre Windowed iForest (`subsequence_if`, pyod), emite score por ventana tras interfaz fija D7 | Autor (pipeline) | CSV Zenodo M2 canales 18-28 | Scores cacheados en repo (D9) |
 | 2 | Capa de incertidumbre | Convierte score crudo en confianza calibrada + banda | Operador | Score del detector + set de calibración | Reportar sin calibrar + avisar en README |
 | 3 | Explicabilidad por canal | Atribuye qué canales dominan cada detección | Operador | Ventana + contribución por feature | Ranking crudo por magnitud |
 | 4 | Capa LLM (generador + juez) | Informe grounded + guardrail anti-alucinación | Operador | Ventana + canales + U (nunca el dato crudo completo) | Plantilla determinista sin LLM |
@@ -93,7 +97,7 @@ Un agente que, sobre el dataset oficial ESA-ADB, detecta anomalías en telemetr�
 
 | Feature | Dónde vive la lógica | Por qué |
 |---|---|---|
-| [1] Detección | Python local (CPU, `eif`) | Windowed EIF es CPU, corre en Mac; no necesita servidor |
+| [1] Detección | Python local (CPU, `pyod`) | Windowed iForest (`subsequence_if`) es CPU, corre en Mac; no necesita servidor |
 | [2] Incertidumbre | Python local (MAPIE/conformal) | Post-proceso del score, ligero |
 | [3] Explicabilidad | Python local (atribución + matplotlib/plotly) | Cálculo + visualización sobre la ventana |
 | [4] LLM generador+juez | Capa LLM vía API (o modelo local para argumento edge/offline) | Requiere modelo de lenguaje; prompt de grounding estricto |
@@ -105,7 +109,7 @@ Un agente que, sobre el dataset oficial ESA-ADB, detecta anomalías en telemetr�
 Telemetría ESA-ADB (Misión2 ligero, canales 18-28)
       │
       ▼
-[1] Detector — windowed EIF (`eif`, CPU)  ──►  score de anomalía por ventana
+[1] Detector — Windowed iForest (`subsequence_if`, pyod, CPU)  ──►  score de anomalía por ventana
       │                                          [interfaz fija D7: scores + ventana + datos]
       ▼
 [2] Incertidumbre (conformal/MAPIE o MC-dropout)  ──►  confianza calibrada + banda U
@@ -122,16 +126,16 @@ Telemetría ESA-ADB (Misión2 ligero, canales 18-28)
 [5] Salida: notebook/README con casos de ejemplo
 ```
 
-Núcleo diferenciador: [2]+[3]+[4]. [1] se apoya en código existente (`eif` + código de referencia de ESA-ADB) para no reinventar. Interfaz modular D7 hace el detector intercambiable (windowed EIF ↔ DC-VAE-ESA oficial) sin rehacer el proyecto.
+Núcleo diferenciador: [2]+[3]+[4]. [1] se apoya en código existente (`subsequence_if` + código de referencia de ESA-ADB) para no reinventar. Interfaz modular D7 hace el detector intercambiable (Windowed iForest ↔ DC-VAE-ESA oficial) sin rehacer el proyecto.
 
-**Stack:** Python 3.9, `eif` (Extended Isolation Forest con ventanas, algoritmo `subsequence_if` de ESA-ADB), MAPIE/conformal (o MC-dropout propio), matplotlib/plotly, LLM vía API con prompt de grounding estricto. `requirements.txt` pinneado (cython<3, numpy 1.21.6), seeds fijadas.
+**Stack:** Python 3.9, `pyod` (Isolation Forest estándar con ventanas = algoritmo `subsequence_if` de ESA-ADB; es el que cita el paper, Liu 2008), MAPIE/conformal (o MC-dropout propio), matplotlib/plotly, LLM vía API con prompt de grounding estricto. `requirements.txt` pinneado, seeds fijadas.
 
 ## 10. Riesgos y mitigaciones
 
 | Riesgo | Impacto | Mitigación |
 |---|---|---|
-| Scope creep | No termina en timebox | Core es [2]+[3]+[4]; [1] se apoya en `eif`. No pulir de más |
-| Hardware del stack oficial (Linux+GPU NVIDIA+512GB) no corre en Mac | Bloquea detección | Windowed EIF CPU en Mac da baseline oficial mejor en M2 ligero (verificado: eif compila con Py3.9+cython<3); stack Docker es Fase 2 opcional (GPU cloud) |
+| Scope creep | No termina en timebox | Core es [2]+[3]+[4]; [1] se apoya en `subsequence_if`. No pulir de más |
+| Hardware del stack oficial (Linux+GPU NVIDIA+512GB) no corre en Mac | Bloquea detección | Windowed iForest (`subsequence_if`, pyod) CPU en Mac da baseline oficial en M2 ligero; solo necesita `pyod` (sin GPU/Docker); stack Docker deep es Fase 2 opcional (GPU cloud) |
 | "Un par de días" → una semana | Se come otras prioridades | Timebox duro, stop 24 jul |
 | Overclaiming (fingir a-bordo/datos falsos) | Hunde credibilidad ante ESA | Framing honesto: edge se argumenta; resultados trazables |
 | Repo a medias | Peor que ninguno | Sale con calidad dentro del timebox o no se menciona |
@@ -143,13 +147,28 @@ Núcleo diferenciador: [2]+[3]+[4]. [1] se apoya en código existente (`eif` + c
 
 | Día | Entregable |
 |---|---|
-| 1 | Ingesta M2 ligero (canales 18-28) + windowed EIF (`eif`) corriendo + interfaz modular D7 |
+| 1 | Ingesta M2 ligero (canales 18-28) + Windowed iForest (`subsequence_if`, pyod) corriendo + interfaz modular D7 |
 | 2 | Capa de incertidumbre calibrada sobre el score |
 | 3 | Atribución por canal + visualizaciones |
 | 4 | Capa LLM (generador + juez) + casos "no sé" |
 | 5 | README, demo reproducible, limpieza, publicar repo |
 
 Justificación del orden (valor/riesgo/dependencias/coste/aprendizaje): [1] es dependencia dura de todo lo demás y el más incierto (datos+entorno) → primero. [2]→[3]→[4] es cadena de valor creciente hacia el diferenciador. [5] empaqueta. Cada día produce algo demostrable.
+
+**Fase de empaquetado — repo limpio (tras cerrar los módulos [1]-[5], antes de publicar):**
+
+Objetivo: que alguien clone el repo, abra el notebook y corra TODO el proceso **sin `esa-adb` y sin descargar los 3.8 GB crudos**. Tareas:
+
+1. **Copiar a `src/` el código de ESA que usamos**, con cabecera de licencia MIT + `NOTICE` (crédito a kplabs-pl/ESA-ADB). Cumple D10 (citar, no forkear):
+   - Detector: `subsequence_if/algorithm.py` (1 archivo, solo pyod) → `src/m1_detection/vendor/`.
+   - Métrica: `ESA_ADB_metrics.py` + `metric.py` + `metrics/utils.py` + `affiliation_based_metrics_repo/` (~14 archivos autocontenidos) → `src/m1_detection/vendor/metrics/` (ajustar rutas de import).
+2. **Repuntar imports:** `model.py` y `evaluation.py` apuntan al código copiado, no a `esa-adb/`.
+3. **Preproceso:** NO copiar sus clases pesadas (`DatasetManager`/`DatasetAnalyzer`). Se deja como paso de una vez documentado (clonar ESA + correr script) + se cachean los datos. Alternativa futura: recortar el preproceso para quitar esa dependencia.
+4. **Cachear artefactos** en `data/cached/` (pocos MB, sí caben en repo): scores del detector + segmentos de datos de los casos demo + labels. Los CSV de 850 MB y los 3.8 GB crudos NO van al repo (documentar descarga Zenodo).
+5. **Borrar `esa-adb/`** entero. Quitar su ignore del `.gitignore`.
+6. **Re-correr los tests → confirmar `EW_F_0.50 = 0.9487`** desde el código copiado (success-test tras cortar esa-adb). Si cambia, algo se rompió al copiar.
+7. **Notebook `notebooks/demo.ipynb`**: corre [1]→[5] desde lo cacheado, en segundos, sin esa-adb.
+8. **README + requirements**: instrucciones de clon→notebook; `requirements.txt` ya sin `eif` (pyod).
 
 **Fase 2 — opcional (solo si sobra tiempo tras día 5, no bloquea MVP):** GPU cloud (~40 €), correr detector deep oficial (DC-VAE-ESA/Telemanom-ESA), enchufarlo vía D7, reproducir métrica oficial → sello. Y/o someter a Kaggle para métrica pública verificable.
 
@@ -172,7 +191,7 @@ Justificación del orden (valor/riesgo/dependencias/coste/aprendizaje): [1] es d
 Streaming/online detection, despliegue real en hardware edge, comparación multi-baseline, y capa híbrida umbral determinista + ML (D1).
 
 **Exploratorio "mejorar el benchmark" (post-MVP, sin promesas):**
-- *Vía 1 — algoritmo:* Fable barre SOTA de TSAD + primeros principios de iForest. Norte factible: el paper prueba que el postprocesado/thresholding pesa más que la red base (Telemanom-ESA-Pruned ganó por dynamic thresholding NDT). Mejor thresholding sobre el windowed EIF = palanca real y barata.
+- *Vía 1 — algoritmo:* Fable barre SOTA de TSAD + primeros principios de iForest. Norte factible: el paper prueba que el postprocesado/thresholding pesa más que la red base (Telemanom-ESA-Pruned ganó por dynamic thresholding NDT). Mejor thresholding sobre el Windowed iForest = palanca real y barata.
 - *Vía 2 — datos:* data augmentation intra-misión (tractable) · canales no-target como contexto (tractable) · transfer entre misiones (research real, traicionero — estructuras distintas, no se apilan con `concat`).
 - *Avisos:* M2 ligero ya en 0.949 (margen escaso); donde mejorar importa es el set completo (~0.07, problema abierto — no prometer batirlo). NO usar Misión3. La mejora REAL y garantizada es la capa [2]+[3]+[4], no estas dos vías.
 

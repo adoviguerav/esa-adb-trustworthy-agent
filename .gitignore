@@ -199,7 +199,7 @@ preprocessed/
 # --- Código de referencia de ESA-ADB (clon local MIT) ---
 # No se republica su repo dentro del nuestro (D10: citar, no forkear).
 # Lo mínimo necesario se vendoriza en src/ con atribución.
-/source/
+/esa-adb/
 
 # --- macOS ---
 .DS_Store

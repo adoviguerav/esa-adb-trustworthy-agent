@@ -62,6 +62,30 @@ El diferencial es siempre reproducible sin hardware pesado.
 
 ## Créditos y licencia
 
-Construido **sobre** el benchmark ESA-ADB, no lo modifica. Créditos a **ESA/ESOC**, **Airbus Defence and Space** y **KP Labs** (`github.com/kplabs-pl/ESA-ADB`, MIT). Paper: [arxiv.org/abs/2406.17826](https://arxiv.org/abs/2406.17826).
+Construido **sobre** el benchmark ESA-ADB, no lo modifica. Créditos a **ESA/ESOC**, **Airbus Defence and Space** y **KP Labs** (`github.com/kplabs-pl/ESA-ADB`, MIT). La reproducción usa el detector `subsequence_if` y la métrica `ESAScores` del framework **TimeEval** (incluido en el repo ESA-ADB, MIT), y **PyOD** para el Isolation Forest estándar (Liu et al., 2008).
+
+Si usas este trabajo, cita ESA-ADB y TimeEval:
+
+```bibtex
+@article{kotowski_european_2024,
+  title   = {European {Space} {Agency} {Benchmark} for {Anomaly} {Detection} in {Satellite} {Telemetry}},
+  author  = {Kotowski, Krzysztof and Haskamp, Christoph and Andrzejewski, Jacek and Ruszczak, Bogdan and Nalepa, Jakub and Lakey, Daniel and Collins, Peter and Kolmas, Aybike and Bartesaghi, Mauro and Martinez-Heras, Jose and De Canio, Gabriele},
+  date    = {2024},
+  publisher = {arXiv},
+  doi     = {10.48550/arXiv.2406.17826}
+}
+
+@article{WenigEtAl2022TimeEval,
+  title   = {TimeEval: {{A}} Benchmarking Toolkit for Time Series Anomaly Detection Algorithms},
+  author  = {Wenig, Phillip and Schmidl, Sebastian and Papenbrock, Thorsten},
+  date    = {2022},
+  journaltitle = {Proceedings of the {{VLDB Endowment}} ({{PVLDB}})},
+  volume  = {15},
+  number  = {12},
+  pages   = {3678--3681},
+  doi     = {10.14778/3554821.3554873}
+}
+```
 
 *Licencia del dataset Zenodo pendiente de verificar antes de publicación. Licencia del repo a definir.*
+*En la fase de empaquetado, el código de ESA/TimeEval que se copie a `src/` llevará su cabecera de licencia MIT + un fichero `NOTICE` con esta atribución.*

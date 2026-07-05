@@ -10,7 +10,7 @@ Sobre telemetría multivariante real: detectar → cuantificar incertidumbre cal
 
 ```
 Telemetría ESA-ADB (Misión2 ligero, canales 18-28)
-  → [1] Detector windowed EIF (eif lib, CPU)       → score/ventana  [interfaz fija D7]
+  → [1] Detector Windowed iForest (subsequence_if, pyod, CPU) → score/ventana  [interfaz fija D7]
   → [2] Incertidumbre (conformal/MAPIE o MC-dropout) → confianza calibrada + banda U
   → [3] Atribución por canal (feature contribution)  → canales responsables
   → [4] Capa LLM: Generador (grounded, refuse-when-unsure) + Juez (guardrail anti-alucinación)
@@ -22,7 +22,7 @@ Todo tras [1] recibe la interfaz fija `scores + ventana + datos` (D7): el detect
 ## Stack
 
 - **Python** (CPU, corre en Mac M5 sin GPU/Docker para el MVP).
-- **`eif`** — Extended Isolation Forest con ventanas (detector [1]; en ESA-ADB es el algoritmo `subsequence_if`, window_size=17, n_trees=200). Requiere Python 3.9 + `cython<3` + numpy 1.21.6 (ver `requirements.txt`). **NO es PyOD.**
+- **`subsequence_if`** — Windowed **Isolation Forest ESTÁNDAR** (Liu 2008, el que cita el paper), detector [1]. Implementado con **`pyod.models.iforest.IForest`** (window_size=17, n_trees=200, random_state=42). Confirmado en `esa-adb/TimeEval-algorithms/subsequence_if/` (manifest + `requirements.txt: pyod==1.1.2` + `algorithm.py: from pyod.models.iforest import IForest`). **NO es `eif`/Extended IF** — ese es el hermano `subsequence_eif`, que ESA NO usa en el grid de M2 ligero. Corrección histórica: la spec vieja decía "eif" por confundir `subsequence_if` (usado) con `subsequence_eif` (no usado); difieren en una letra.
 - **MAPIE / conformal prediction** o MC-dropout propio — incertidumbre [2].
 - **matplotlib / plotly** — visualización de atribución [3].
 - **LLM vía API** con prompt de grounding estricto (o modelo local para argumento edge/offline) — capa [4].
@@ -36,10 +36,15 @@ Todo tras [1] recibe la interfaz fija `scores + ventana + datos` (D7): el detect
 ├── data/                ← instrucciones de descarga (NO el dataset)
 │   └── cached_scores/   ← scores precalculados (D9) → demo sin GPU
 ├── src/
-│   ├── detect.py        ← [1]
-│   ├── uncertainty.py   ← [2]
-│   ├── explain.py       ← [3]
-│   └── report.py        ← [4] capa LLM
+│   ├── config.py        ← constantes ancla (canales, hiperparámetros)
+│   ├── interfaces.py    ← contrato D7 (DetectionResult, Pydantic)
+│   ├── preprocessing.py ← [1a] ingesta + preproceso (crudo → CSV)
+│   ├── model.py         ← [1b] detector Windowed iForest (subsequence_if, pyod)
+│   ├── evals.py         ← adaptador a la métrica ESA
+│   ├── metrics_esa/     ← métrica de ESA vendorizada (MIT, sin tocar)
+│   ├── uncertainty.py   ← [2]  (pendiente)
+│   ├── explain.py       ← [3]  (pendiente)
+│   └── report.py        ← [4] capa LLM  (pendiente)
 ├── notebooks/demo.ipynb ← [5]
 └── results/             ← figuras y métricas
 ```
@@ -63,7 +68,7 @@ Reglas del proyecto: `@.claude/rules/components.md`, `@.claude/rules/patterns.md
 
 - **Datos de ESA, no sustituibles.** Nunca cambiar ESA-ADB por otro benchmark (NASA SMAP/MSL). El activo es "resuelvo el problema de ESA con datos de ESA".
 - **Nunca Misión3.** El paper la descarta (anomalías triviales/escasas, gaps).
-- **MVP = M2 ligero + windowed EIF (`eif`) CPU.** No deep, no GPU, no Docker, no fork. Stack oficial deep es Fase 2 opcional.
+- **MVP = M2 ligero + Windowed iForest (`subsequence_if`, pyod) CPU.** No deep, no GPU, no Docker, no fork. Stack oficial deep es Fase 2 opcional.
 - **Repo nuevo, no fork** del oficial (D10). Citar `kplabs-pl/ESA-ADB` + ESA/ESOC + Airbus + KP Labs.
 - **El LLM afirma solo lo grounded.** Hipótesis van etiquetadas como hipótesis (D4). El juez bloquea lo no soportado (D5).
 - **No overclaiming.** Edge-deployability se argumenta, no se certifica. Resultados trazables al dataset, cero datos inventados.

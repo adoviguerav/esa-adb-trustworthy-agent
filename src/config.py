@@ -1,12 +1,22 @@
-"""Anchor constants for the trustworthy layer [2][3][4].
+"""Anchor constants for the M1 detector and the trustworthy layer [2][3][4].
 
-Values mirror the detector reproduction in ``repro/run_subsequence_if.py`` and
-``esa-adb/mission2_experiments.py`` so the whole pipeline stays consistent. This
-module holds ONLY constants — no logic, no I/O.
+Values mirror ``esa-adb/mission2_experiments.py`` so the whole pipeline stays
+consistent. This module holds ONLY constants + path anchors — no logic.
 """
 from __future__ import annotations
 
 import os
+from pathlib import Path
+
+# --- Paths -----------------------------------------------------------------
+REPO = Path(__file__).resolve().parents[1]
+ESA = REPO / "esa-adb"  # ESA-ADB clone (detector + metric source; removed after cleanup)
+ALGO = ESA / "TimeEval-algorithms" / "subsequence_if" / "algorithm.py"
+PREP_DIR = REPO / "data" / "preprocessed_subset" / "multivariate" / "ESA-Mission2-semi-supervised"
+TRAIN_CSV = PREP_DIR / "21_months.train.csv"
+TEST_CSV = PREP_DIR / "21_months.test.csv"
+LABELS_CSV = REPO / "data" / "ESA-Mission2" / "labels.csv"
+CACHE_DIR = REPO / "data" / "cached"  # persisted model + scores (reused by tests / [2])
 
 # --- Dataset: Mission2 lightweight subset ----------------------------------
 # The 11 target channels of the M2 lightweight benchmark (channel_18 .. channel_28).
