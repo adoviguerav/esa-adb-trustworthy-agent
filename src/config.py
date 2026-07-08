@@ -36,6 +36,13 @@ BASELINE_F05: float = 0.949  # paper Table 2, M2 lightweight, Windowed iForest
 # Miscoverage level for conformal prediction (1 - alpha = target coverage).
 CONFORMAL_ALPHA: float = 0.1
 
+# Rolling (causal) recalibration [2b]: counter the temporal drift that breaks a
+# single fixed calibration. For each block of BLOCK windows, calibrate against the
+# ROLLING_N_CALIB most recent INDEPENDENT normal windows strictly in the past.
+# Tuned so coverage on held-out normals lands near CONFORMAL_ALPHA (see rolling.py).
+ROLLING_N_CALIB: int = 20000
+ROLLING_BLOCK: int = 20000
+
 # --- LLM layer [4] ---------------------------------------------------------
 # Read from environment, never hardcode secrets. Provider = Anthropic (Claude).
 LLM_API_KEY_ENV: str = "ANTHROPIC_API_KEY"
