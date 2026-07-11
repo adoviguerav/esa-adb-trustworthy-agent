@@ -8,8 +8,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 # --- Paths -----------------------------------------------------------------
 REPO = Path(__file__).resolve().parents[1]
+load_dotenv(REPO / ".env")  # load GROQ_API_KEY (and any ESA_* overrides) from the local .env
 ESA = REPO / "esa-adb"  # ESA-ADB clone (detector + metric source; removed after cleanup)
 ALGO = ESA / "TimeEval-algorithms" / "subsequence_if" / "algorithm.py"
 PREP_DIR = REPO / "data" / "preprocessed_subset" / "multivariate" / "ESA-Mission2-semi-supervised"
@@ -44,9 +47,11 @@ ROLLING_N_CALIB: int = 20000
 ROLLING_BLOCK: int = 20000
 
 # --- LLM layer [4] ---------------------------------------------------------
-# Read from environment, never hardcode secrets. Provider = Anthropic (Claude).
-LLM_API_KEY_ENV: str = "ANTHROPIC_API_KEY"
-LLM_MODEL: str = os.getenv("ESA_LLM_MODEL", "claude-sonnet-5")
+# Read from environment, never hardcode secrets. Provider = Groq (open-weight models,
+# free tier -> the public repo reproduces without a paywall). Swappable behind llm.py.
+LLM_API_KEY_ENV: str = "GROQ_API_KEY"
+LLM_MODEL: str = os.getenv("ESA_LLM_MODEL", "openai/gpt-oss-20b")     # generator [4a]
+JUDGE_MODEL: str = os.getenv("ESA_JUDGE_MODEL", "openai/gpt-oss-120b")  # judge [4b] (stronger, reasoning)
 
 
 def require_llm_api_key() -> str:

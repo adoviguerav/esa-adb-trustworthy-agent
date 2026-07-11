@@ -20,6 +20,11 @@ statsmodels             # DatasetAnalyzer (solo metadata, no toca los datos)
 # --- interfaz / validación de contratos ---
 pydantic>=2,<3          # DetectionResult (interfaz D7) valida en runtime, no solo documenta
 
+# --- capa LLM [4] — generador + juez (provider = Groq, open-weight, free tier) ---
+# Versiones pinneadas al último release (jul-2026); langchain-core y groq entran como deps.
+langchain-groq==0.3.8   # ChatGroq + with_structured_output(Report) -> Pydantic validado (última en PyPI)
+python-dotenv==1.2.1    # carga GROQ_API_KEY desde .env (nunca hardcodear la clave)
+
 # --- test ---
 pytest
 
