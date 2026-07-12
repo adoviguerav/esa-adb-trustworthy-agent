@@ -1,48 +1,36 @@
-"""Generator [4a]: grounded evidence (M3 facts + retrieval) -> the Brief (prose only).
+"""Generator [4a]: grounded evidence (M3 facts + retrieval) -> the Brief (narrative prose).
 
-Consumes ONLY the grounded context (m3_event_contexts.json) and the retrieval result --
-never raw telemetry. After generation it enforces the mechanical grounding guard: every
-`channel_N` / `id_N` token the model wrote must exist in the EVIDENCE, else the brief is
-rejected loudly (never shipped). Semantic auditing (root cause, overclaim, hypothesis-as-
-fact) is NOT done here -- that is the judge's job (guardrails, F7/F8).
+Consumes ONLY the narrative-shaped evidence (names, qualitative words, human duration,
+confidence %) -- precise measurements never reach the model, so it cannot hallucinate or
+embellish them; they live in the deterministic tables of the rendered alert. After
+generation the brief must pass the lexical precheck against its own evidence (single
+guard source -- the same check the pipeline applies). Semantic auditing is the judge's
+job (guardrails, F7/F8).
 """
 from __future__ import annotations
 
 import json
-import re
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # src/ on path
 import config  # noqa: E402
 from m4_report import llm, prompts  # noqa: E402
+from m4_report.guardrails.precheck import precheck  # noqa: E402
 
 CONTEXTS_JSON = config.CACHE_DIR / "m3_event_contexts.json"
 
-_TOKEN_RE = re.compile(r"\b(channel_\d+|id_\d+)\b")
-
-
-# SHORT EXPLANATION: the mechanical guard. Collect every channel_N / id_N the model
-# wrote and check each against the evidence (event channels + neighbor channels + ids).
-def stray_tokens(text: str, context: dict, retrieval: dict) -> set[str]:
-    """Tokens cited in ``text`` that do NOT exist in the evidence (empty set = grounded)."""
-    allowed = {ch for ch, _ in context["top_channels"]}
-    for nb in retrieval["neighbors"]:
-        allowed.add(nb["id"])
-        allowed.update(nb["channels"])
-    return set(_TOKEN_RE.findall(text)) - allowed
-
 
 def generate_brief(context: dict, retrieval: dict) -> str:
-    """One grounded Brief for one closed event; raises if the guard finds a stray token."""
-    user = prompts.evidence_block(context, retrieval)
-    text = llm.text(prompts.GENERATOR_PROMPT, user)
+    """One grounded Brief for one closed event; raises if the precheck finds a violation."""
+    evidence = prompts.evidence_block(context, retrieval)
+    text = llm.text(prompts.GENERATOR_PROMPT, evidence)
     if not text.strip():
         raise ValueError(f"empty brief for event {context['event_id']}")
-    stray = stray_tokens(text, context, retrieval)
-    if stray:
+    result = precheck(text, evidence)
+    if not result["passed"]:
         raise ValueError(
-            f"brief for event {context['event_id']} cites tokens outside evidence: {sorted(stray)}"
+            f"brief for event {context['event_id']} failed precheck: {result['offending']}"
         )
     return text
 
@@ -53,12 +41,12 @@ def load_contexts() -> list[dict]:
 
 
 # SHORT EXPLANATION: F5 success-test on two REAL reference events: the top-priority one
-# (event 33) and the most NOVEL one (highest novelty -> exercises the honest-novelty
-# language). Checks are mechanical only: guard clean + cache round-trip byte-equal.
+# (event 33) and the most NOVEL one (exercises the familiarity language). Mechanical
+# checks only: precheck clean + cache round-trip byte-equal.
 def main() -> None:
     import os
 
-    from m4_report.retrieval.retrieve import load_corpus, retrieve  # local: avoids cycle
+    from m4_report.retrieval.retrieve import load_corpus, retrieve  # noqa: E402
 
     contexts = load_contexts()
     corpus = load_corpus()
@@ -69,20 +57,18 @@ def main() -> None:
                    key=lambda eid: retrievals[eid]["novelty"])
     picks = [33, novel_id]
 
-    briefs = {}
-    for eid in picks:
-        briefs[eid] = generate_brief(by_id[eid], retrievals[eid])
-        assert not stray_tokens(briefs[eid], by_id[eid], retrievals[eid])  # guard, re-checked
+    briefs = {eid: generate_brief(by_id[eid], retrievals[eid]) for eid in picks}
 
     # cache round-trip: with the cache toggle ON, the same call must return the exact
     # same text (the committed cache is the canonical reference, D9).
     os.environ["ESA_LLM_USE_CACHE"] = "true"
     for eid in picks:
-        again = generate_brief(by_id[eid], retrievals[eid])
-        assert again == briefs[eid], f"cache round-trip differs for event {eid}"
+        assert generate_brief(by_id[eid], retrievals[eid]) == briefs[eid], (
+            f"cache round-trip differs for event {eid}"
+        )
 
     print("=== M4 Fase 5 -- generator success-test ===")
-    print(f"  (a) guard          : 0 stray tokens in {len(picks)} briefs  OK")
+    print(f"  (a) precheck clean  : {len(picks)} briefs, 0 violations  OK")
     print(f"  (b) cache round-trip: byte-equal on re-call  OK")
     for eid in picks:
         role = "top-priority" if eid == 33 else f"most-novel (novelty={retrievals[eid]['novelty']:.3f})"
