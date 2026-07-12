@@ -25,9 +25,15 @@ pydantic>=2,<3          # DetectionResult (interfaz D7) valida en runtime, no so
 langchain-groq==0.3.8   # ChatGroq + with_structured_output(Report) -> Pydantic validado (última en PyPI)
 python-dotenv==1.2.1    # carga GROQ_API_KEY desde .env (nunca hardcodear la clave)
 
+# --- demo notebook [5] ---
+nbformat                # notebook file format (generate/validate demo.ipynb)
+ipykernel               # lets Jupyter/VSCode run the notebook on this venv
+nbconvert               # headless execution (bake outputs before committing)
+
 # --- test ---
 pytest
 
-# NOTA: `import timeeval` (para la métrica ESAScores) arrastra estas deps de su orquestación,
-# aunque NO usemos Docker: docker (SDK), durations, dask[distributed]==2021.5.*, click==8.0.2,
-# numpyencoder. Instaladas en el venv; ver docs/ENV_DEVIATIONS.md.
+# NOTA (obsoleta tras vendorizar la métrica en src/metrics_esa — fase 0 de M5): antes,
+# `import timeeval` (métrica ESAScores) arrastraba deps de su orquestación (docker SDK,
+# durations, dask[distributed]==2021.5.*, click==8.0.2, numpyencoder). Ya NO hacen falta;
+# limpiar del venv en el empaquetado final. Ver docs/ENV_DEVIATIONS.md.
