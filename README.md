@@ -19,7 +19,7 @@ But the operator is then handed a bare 0/1 flag from a model that cannot say how
 
 **The contribution is the trustworthy layer, not the detector.**
 
-The detector is deliberately not novel: it reproduces ESA's own published baseline using ESA's own code, to the fourth decimal (F0.5 = 0.9487 against their reported 0.949). That number is the floor, not the achievement, and it doubles as a regression alarm.
+The detector is deliberately not novel: it reproduces ESA's own published baseline (F0.5 = 0.949) using ESA's own code, on a laptop. That number is the floor, not the achievement, and it doubles as a regression alarm: if a later change moves it, something broke.
 
 What sits on top of it is the point:
 
@@ -31,12 +31,12 @@ The detector is a replaceable part: modules 2 to 4 consume only its outputs, nev
 
 ## Results
 
-| Module | What it produces | Headline number |
+| Module | What it means | The number |
 |---|---|---|
-| [1] Detection | Windowed Isolation Forest, score per window | Event-wise **F0.5 = 0.9487** (paper Table 2: 0.949) |
-| [2] Uncertainty | Conformal p-value, calibrated confidence | On the untouched final third: **F0.5 = 0.9809**. **Zero false alarms** on 976,182 known-normal windows at the operating point |
-| [3] Attribution | Ranked responsible channels per event | **hit@1 = 1.0** versus 0.617 for raw magnitude and 0.475 for random, over 120 events |
-| [4] Trustworthy alert | Facts table + one audited paragraph | Judge on a hand-labelled golden set: **precision 1.0, recall 1.0** over 18 cases. Generator over the whole mission: **120/120 PASS** |
+| [1] Detection | It reproduces ESA's published baseline for this benchmark subset, running on a MacBook: no Docker, no GPU, no cluster | Event-wise **F0.5 = 0.949**, the same figure ESA reports |
+| [2] Uncertainty | It turns the raw score into a calibrated confidence and **derives** the threshold that separates anomaly from normal, instead of hand-picking one. At that threshold it never cried wolf | **Zero false alarms across 976,182 windows known to be normal**, at **99% precision** on the events it did flag |
+| [3] Attribution | It tells you **exactly which channels carry the anomaly, and how much each one contributes** | The channel it names is one the ESA experts annotated **120 times out of 120**. Ranking by raw magnitude, the obvious approach, gets it right 74 |
+| [4] Alert | It writes a report whose **every figure is deterministic**: the model contributes the prose and nothing else, and two guardrails audit it before it ships | Given 18 hand-written test briefs, it approved the 7 honest ones and **caught all 11 planted lies**. Over the 120 real events: **120 out of 120 clean** |
 
 Every number is produced by a cell in the notebook and is traceable to the dataset. Nothing is invented.
 
@@ -107,7 +107,7 @@ The cache rule in this repo: an artifact is committed only when recomputing it c
 │   ├── m3_attribution/       baseline, perturbation, event aggregation, evaluation, context
 │   └── m4_report/            retrieval · generation · guardrails (precheck + judge) · pipeline
 ├── tests/                    regression suite, M1 to M4
-├── docs/REPRODUCTION.md      how 0.9487 was reproduced, and how the data was verified
+├── docs/REPRODUCTION.md      how the ESA baseline was reproduced, and how the data was verified
 ├── data/                     download instructions (the dataset is NOT in the repo)
 └── NOTICE                    attribution for the vendored ESA code and the dataset
 ```
