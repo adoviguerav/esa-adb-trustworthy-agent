@@ -16,15 +16,16 @@ import sys
 from pathlib import Path
 
 import matplotlib
-matplotlib.use("Agg")  # no display; render straight to file
+if "ipykernel" not in sys.modules:  # headless CLI only: switching inside a notebook
+    matplotlib.use("Agg")           # would silently kill plt.show() for later cells
 import matplotlib.pyplot as plt
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # src/ on path
 import config  # noqa: E402
 from m2_uncertainty.scores import load_test_channels  # noqa: E402
-from attribute import attribute_many  # noqa: E402
-from evaluate import load_channel_truth, true_channels  # noqa: E402
+from m3_attribution.attribute import attribute_many  # noqa: E402
+from m3_attribution.evaluate import load_channel_truth, true_channels  # noqa: E402
 
 EVENTS_JSON = config.CACHE_DIR / "m3_events.json"
 BASELINE_NPY = config.CACHE_DIR / "m3_baseline.npy"

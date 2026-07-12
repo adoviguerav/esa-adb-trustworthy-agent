@@ -22,7 +22,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # src/ on path
 import config  # noqa: E402
-from channels import load_channel_meta, shared_relations  # noqa: E402
+from m3_attribution.channels import load_channel_meta, shared_relations  # noqa: E402
 
 EVENTS_JSON = config.CACHE_DIR / "m3_events.json"
 CONTEXTS_JSON = config.CACHE_DIR / "m3_event_contexts.json"

@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # src/ on path
 import config  # noqa: E402
 from m2_uncertainty.scores import load_test_channels  # noqa: E402
 from m2_uncertainty.split import load_timestamps  # noqa: E402
-from attribute import attribute_many  # noqa: E402  same-package engine
+from m3_attribution.attribute import attribute_many  # noqa: E402  same-package engine
 
 SPLIT_NPZ = config.CACHE_DIR / "split.npz"
 P_TEST = config.CACHE_DIR / "p_test.npy"

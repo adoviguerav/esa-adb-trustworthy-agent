@@ -93,7 +93,8 @@ def coverage_report(scores, normal, thirds, calib, alpha=0.05, n_blocks=60) -> d
 # frozen calibration threshold. Where p95 spikes above the line = a burst = false alarms.
 def make_plot(scores, normal, thirds, calib, n_blocks=60) -> None:
     import matplotlib
-    matplotlib.use("Agg")
+    if "ipykernel" not in sys.modules:  # headless CLI only: switching inside a notebook
+        matplotlib.use("Agg")           # would silently kill plt.show() for later cells
     import matplotlib.pyplot as plt
 
     step = config.WINDOW_SIZE
