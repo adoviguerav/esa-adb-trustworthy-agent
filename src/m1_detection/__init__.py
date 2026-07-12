@@ -1,6 +1,7 @@
-"""[1] Detection — thin adapter exposing the reproduced detector behind D7.
+"""[1] Detection — ESA's ``subsequence_if`` detector, vendored and reproduced.
 
-The real detector is ESA's own ``subsequence_if`` run verbatim in ``repro/``. This
-package does NOT reimplement it; it only wraps ``repro`` output into a
-``DetectionResult`` so the trustworthy layer stays detector-agnostic.
+The detector is ESA's own code run verbatim (``vendor/algorithm.py``, via its JSON
+CLI). This package does NOT reimplement it: ``model.py`` wires train/score and caches
+outputs, ``evaluation.py`` computes the official event-wise metric (0.9487), and
+``preprocessing.py`` turns the raw Zenodo dump into the canonical train/test CSVs.
 """

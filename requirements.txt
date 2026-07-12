@@ -25,6 +25,9 @@ pydantic>=2,<3          # DetectionResult (interfaz D7) valida en runtime, no so
 langchain-groq==0.3.8   # ChatGroq + with_structured_output(Report) -> Pydantic validado (última en PyPI)
 python-dotenv==1.2.1    # carga GROQ_API_KEY desde .env (nunca hardcodear la clave)
 
+# --- visualization [3][5] ---
+matplotlib              # attribution figures (M3) + demo notebook plots
+
 # --- demo notebook [5] ---
 nbformat                # notebook file format (generate/validate demo.ipynb)
 ipykernel               # lets Jupyter/VSCode run the notebook on this venv
