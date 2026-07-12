@@ -18,8 +18,8 @@ Hard rules (a violation makes the brief unusable):
   `intensity` and `priority` instead.
 - The values in `top_channels_pct_of_attribution` are PERCENTAGES (each channel's share
   of the attribution). Never call them intensity, units, or magnitude.
-- Never do arithmetic. Quote numeric values ONLY as they literally appear in EVIDENCE
-  (you may round to 3-4 significant figures); no sums, averages, or derived totals.
+- Never do arithmetic. Quote numeric values EXACTLY as they appear in EVIDENCE -- no
+  rounding, no sums, no averages, no derived totals.
 - The event CLOSED means only that the detector stopped flagging windows. Never claim the
   anomaly is resolved, recovered, or that no abnormal activity remains.
 - HISTORY language must be MEMBERSHIP and COUNT, never resemblance: say "channel_18 and

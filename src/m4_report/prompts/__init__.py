@@ -24,13 +24,30 @@ _EVIDENCE_FIELDS = (
 )
 
 
+# SHORT EXPLANATION: every float the LLM sees is rounded to 6 significant figures. The
+# model then quotes readable numbers, and the precheck can demand EXACT matches (no
+# tolerance logic). 6 -- not 3-4 -- because m2_confidence 0.999983 must not round to a
+# fabricated 1.0. The operator-facing facts table stays full-precision (verbatim M3).
+def _round6(obj):
+    """Recursively round floats to 6 significant figures (dicts/lists/scalars)."""
+    if isinstance(obj, float):
+        return float(f"{obj:.6g}")
+    if isinstance(obj, dict):
+        return {k: _round6(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_round6(v) for v in obj]
+    return obj
+
+
 # SHORT EXPLANATION: the neighbor view for the LLM keeps only what membership language
 # needs (which past anomaly, which channels, how similar). class/category/locality stay
 # in the machine output -- an anonymised label invites resemblance claims and tells a
-# human operator nothing.
+# human operator nothing. n_neighbors is included so the count ("appear in 5 past
+# anomalies") is a citable fact, not model arithmetic.
 def _history_view(retrieval: dict) -> dict:
     """The retrieval evidence the generator may cite."""
     return {
+        "n_neighbors": len(retrieval["neighbors"]),
         "neighbors": [
             {"id": nb["id"], "channels": nb["channels"], "sim": nb["sim"]}
             for nb in retrieval["neighbors"]
@@ -56,7 +73,7 @@ def evidence_block(context: dict, retrieval: dict) -> str:
     facts = {_FIELD_RENAMES.get(k, k): context[k] for k in _EVIDENCE_FIELDS if k in context}
     return (
         "EVIDENCE (use ONLY these facts):\n"
-        "FACTS (this event):\n" + json.dumps(facts, indent=2) + "\n"
+        "FACTS (this event):\n" + json.dumps(_round6(facts), indent=2) + "\n"
         "HISTORY (past anomalies, all ended before this event started):\n"
-        + json.dumps(_history_view(retrieval), indent=2)
+        + json.dumps(_round6(_history_view(retrieval)), indent=2)
     )
