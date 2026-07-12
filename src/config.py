@@ -50,7 +50,7 @@ ROLLING_BLOCK: int = 20000
 # Read from environment, never hardcode secrets. Provider = Groq (open-weight models,
 # free tier -> the public repo reproduces without a paywall). Swappable behind llm.py.
 LLM_API_KEY_ENV: str = "GROQ_API_KEY"
-LLM_MODEL: str = os.getenv("ESA_LLM_MODEL", "openai/gpt-oss-20b")     # generator [4a]
+LLM_MODEL: str = os.getenv("ESA_LLM_MODEL", "openai/gpt-oss-120b")    # generator [4a] (same as judge for now)
 JUDGE_MODEL: str = os.getenv("ESA_JUDGE_MODEL", "openai/gpt-oss-120b")  # judge [4b] (stronger, reasoning)
 
 

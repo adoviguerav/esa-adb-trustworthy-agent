@@ -46,6 +46,40 @@ def _load() -> dict:
     return json.loads(LLM_CACHE.read_text()) if LLM_CACHE.exists() else {}
 
 
+# SHORT EXPLANATION: plain-prose call for the Brief (F5). gpt-oss via Groq fails
+# intermittently on forced tool-calling with a 1-field schema ("tool_use_failed"), and a
+# prose paragraph needs no structure anyway -- so the generator asks for text directly.
+# Same cache contract as structured(): cache-first, committed cache = canonical (D9).
+def text(system: str, user: str, *, model: str | None = None) -> str:
+    """Return the model's plain-text answer for one grounded call. Cache-first."""
+    model = model or config.LLM_MODEL
+    key = _key(model, system, user)
+    cache = _load()
+
+    if _use_cache():
+        if key in cache:
+            return cache[key]
+        raise RuntimeError(
+            f"No cached LLM response for key {key} (model={model}). Export "
+            f"{config.LLM_API_KEY_ENV} and set ESA_LLM_USE_CACHE=false to generate it "
+            f"(it is then cached as the canonical reference)."
+        )
+
+    from langchain_groq import ChatGroq  # imported only on the API path
+
+    # max_tokens explicit: reasoning models can burn the completion budget on internal
+    # reasoning and return EMPTY content -- the budget must reach the text.
+    llm = ChatGroq(model=model, temperature=0, max_tokens=2048,
+                   api_key=config.require_llm_api_key())
+    answer = str(llm.invoke([("system", system), ("human", user)]).content)
+    if not answer.strip():
+        # an empty answer must NEVER be cached as canonical -- fail loud instead
+        raise RuntimeError(f"model {model} returned empty content")
+    cache[key] = answer
+    LLM_CACHE.write_text(json.dumps(cache, indent=2))
+    return answer
+
+
 def structured(system: str, user: str, schema: type[T], *, model: str | None = None) -> T:
     """Return a validated ``schema`` instance for one grounded call. Cache-first."""
     model = model or config.LLM_MODEL
