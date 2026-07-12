@@ -19,8 +19,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # src/ on path
 import config  # noqa: E402
 
-sys.path.insert(0, str(config.ESA))  # ESAScores lives in ESA's timeeval package
-from timeeval.metrics import ESAScores  # noqa: E402
+from metrics_esa import ESAScores  # noqa: E402  (vendored, see NOTICE — no esa-adb clone)
 from sklearn.preprocessing import MinMaxScaler  # noqa: E402
 
 SCORES_TEST = config.CACHE_DIR / "scores_test.csv"

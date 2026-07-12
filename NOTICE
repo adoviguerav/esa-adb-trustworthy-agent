@@ -1,0 +1,46 @@
+NOTICE — Third-party code vendored in this repository
+======================================================
+
+This project vendors (copies verbatim) small parts of the ESA-ADB codebase so the
+pipeline runs without cloning the full ESA-ADB repository.
+
+Source repository: https://github.com/kplabs-pl/ESA-ADB
+License: MIT (Copyright (c) European Space Agency, KP Labs, Airbus Defence and Space)
+Paper: "European Space Agency Benchmark for Anomaly Detection in Satellite Telemetry",
+       arXiv:2406.17826
+
+Vendored files (verbatim, unmodified):
+
+  src/m1_detection/vendor/algorithm.py
+      from TimeEval-algorithms/subsequence_if/algorithm.py
+      (the `subsequence_if` Windowed Isolation Forest detector)
+
+  src/m1_detection/vendor/prep_utils.py
+      from notebooks/data-prep/utils.py
+      (preprocessing helpers: AnnotationLabel, encode_telecommands, find_full_time_range)
+
+  src/m1_detection/vendor/timeeval_min/datasets/
+      from timeeval/datasets/
+      (ESA's multivariate fork of TimeEval dataset management)
+
+  src/m1_detection/vendor/timeeval_min/utils/datasets.py
+      from timeeval/utils/datasets.py
+
+  src/m1_detection/vendor/timeeval_min/data_types.py
+      from timeeval/data_types.py
+
+  src/metrics_esa/  (ESA_ADB_metrics.py, metric.py, utils.py)
+      from timeeval/metrics/
+      (the ESAScores event-wise metric and its minimal import closure)
+
+  src/metrics_esa/affiliation_based_metrics_repo/
+      from timeeval/metrics/affiliation_based_metrics_repo/
+      (affiliation-based P/R; carries its own LICENSE file, kept in place)
+
+ESA-ADB itself builds on TimeEval (https://github.com/HPI-Information-Systems/TimeEval).
+
+Dataset attribution (not distributed in this repository; downloaded from Zenodo):
+  ESA Anomaly Dataset (ESA-ADB), license CC BY 3.0 IGO.
+  https://doi.org/10.5281/zenodo.12528696 (Mission1/Mission2)
+  https://zenodo.org/records/15237121 (full record)
+  Credit: European Space Agency (ESOC), KP Labs, Airbus Defence and Space.

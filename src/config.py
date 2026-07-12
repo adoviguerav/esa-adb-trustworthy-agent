@@ -13,8 +13,8 @@ from dotenv import load_dotenv
 # --- Paths -----------------------------------------------------------------
 REPO = Path(__file__).resolve().parents[1]
 load_dotenv(REPO / ".env")  # load GROQ_API_KEY (and any ESA_* overrides) from the local .env
-ESA = REPO / "esa-adb"  # ESA-ADB clone (detector + metric source; removed after cleanup)
-ALGO = ESA / "TimeEval-algorithms" / "subsequence_if" / "algorithm.py"
+# Detector + metric are vendored (MIT, see NOTICE) — the esa-adb clone is NOT needed.
+ALGO = REPO / "src" / "m1_detection" / "vendor" / "algorithm.py"
 PREP_DIR = REPO / "data" / "preprocessed_subset" / "multivariate" / "ESA-Mission2-semi-supervised"
 TRAIN_CSV = PREP_DIR / "21_months.train.csv"
 TEST_CSV = PREP_DIR / "21_months.test.csv"

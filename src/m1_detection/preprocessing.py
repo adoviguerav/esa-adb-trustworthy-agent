@@ -1,6 +1,6 @@
 # ============================================================================
 # DERIVED from ESA-ADB: esa-adb/notebooks/data-prep/Mission2_semiunsupervised_prep_from_raw.py
-# (MIT, kplabs-pl/ESA-ADB). Byte-identical copy EXCEPT two documented changes:
+# (MIT, kplabs-pl/ESA-ADB). Byte-identical copy EXCEPT three documented changes:
 #   1. all_parameter_names restricted to channels 18-28 (Mission2 lightweight subset)
 #      instead of globbing all 100 channels  -> ~9x faster, fewer columns.
 #   2. Output dir -> data/preprocessed_subset (separate, so it never collides with
@@ -8,11 +8,16 @@
 # Telecommands are KEPT unchanged so find_full_time_range() yields the SAME time grid.
 # Per-channel processing is independent, so channels 18-28 come out identical to the
 # full run. Validated afterwards by diffing 18-28 columns against the full-run output.
-# Run with PYTHONPATH = esa-adb + esa-adb/notebooks/data-prep (for timeeval + utils).
+#   3. Imports resolve against the vendored copies in src/ (m1_detection/vendor/ +
+#      NOTICE) instead of PYTHONPATH into the esa-adb clone -> runs standalone.
+#      NOT replaceable by PyPI `timeeval`: ESA's fork uses per-channel metadata dicts
+#      (timeeval_min/datasets/metadata.py:65-67); upstream is scalar.
+# Run as: python src/m1_detection/preprocessing.py <path-to-raw-ESA-Mission2>
 # ============================================================================
 import argparse
 import os
 import statistics
+import sys
 from pathlib import Path
 from glob import glob
 
@@ -21,9 +26,19 @@ import numpy as np
 from tqdm import tqdm
 from dateutil.parser import parse as parse_date
 
-from timeeval import DatasetManager, Datasets
-from timeeval.datasets import DatasetAnalyzer, DatasetRecord, AnomalyLength
-from utils import AnnotationLabel, encode_telecommands, find_full_time_range
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # src/ on path
+from m1_detection.vendor.timeeval_min.datasets import (  # noqa: E402
+    AnomalyLength,
+    DatasetAnalyzer,
+    DatasetManager,
+    DatasetRecord,
+    Datasets,
+)
+from m1_detection.vendor.prep_utils import (  # noqa: E402
+    AnnotationLabel,
+    encode_telecommands,
+    find_full_time_range,
+)
 
 
 def parse_args():

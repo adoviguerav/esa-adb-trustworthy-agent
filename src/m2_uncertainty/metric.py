@@ -22,8 +22,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # src/ on path
 import config  # noqa: E402
 
-sys.path.insert(0, str(config.ESA))  # ESAScores lives in ESA's timeeval package
-from timeeval.metrics import ESAScores  # noqa: E402
+from metrics_esa import ESAScores  # noqa: E402  (vendored, see NOTICE — no esa-adb clone)
 
 HALF = config.WINDOW_SIZE // 2  # 8: window center offset (== ESA's pad width)
 
