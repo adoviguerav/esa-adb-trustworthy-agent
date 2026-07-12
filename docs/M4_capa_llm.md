@@ -35,6 +35,13 @@ Cada dato viaja por uno de dos carriles, nunca por ambos:
   fallo real observado (re-copiar %, manglar qué canales comparten grupo, adjetivar
   novelty) desapareció al mover ese dato del carril narrativo al determinista.
 
+**El tradeoff detrás de este diseño:** con datos específicos delante, el LLM alucinaba.
+Un modelo más potente probablemente lo gestionaría — pero el objetivo es un **modelo
+pequeño corriendo a bordo** (espacio y cómputo en un satélite mandan). En vez de comprar
+músculo, se redujo la superficie probabilística: prosa simple que solo cita, números
+deterministas que no pasan por el LLM. Prosa menos rica a cambio de prosa que no puede
+mentir.
+
 ## Guardarraíles (veredicto = precheck AND juez)
 
 1. **Precheck** (léxico, sin LLM): todo token `channel_N`/`id_N`/`group_N`, número y
