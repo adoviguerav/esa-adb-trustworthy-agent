@@ -204,3 +204,6 @@ preprocessed/
 # --- macOS ---
 .DS_Store
 **/.DS_Store
+# Tooling interno / docs de trabajo — no viajan al repo público
+SKILLS_USAGE.md
+CLAUDE.md
