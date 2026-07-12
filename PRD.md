@@ -42,36 +42,36 @@ Un agente que, sobre el dataset oficial ESA-ADB, detecta anomalías en telemetr�
 
 ## 5. Acceptance criteria
 
+> **Estado a 2026-07-12:** los 5 componentes están cerrados. Lo único pendiente es el
+> horneado del notebook (Run All con outputs committeados) y el **clean-room test** (clonar
+> en otra máquina y hacer de visitante). Tres criterios se **desviaron conscientemente**
+> durante la implementación: están marcados con ⚠️ y explicados abajo, no son deuda oculta.
+
 **Detección [1]**
-- [ ] Carga Misión2 subconjunto ligero (canales 18-28) desde datos oficiales de Zenodo.
-- [ ] Windowed iForest (`subsequence_if`, Isolation Forest estándar vía `pyod`, CPU) corre en Mac sin GPU/Docker y produce score por ventana.
-- [ ] Métrica F0.5 event-wise reportada y comparable al baseline publicado por ESA (referencia: 0.949).
-- [ ] Detector detrás de interfaz fija `scores + ventana + datos` (D7), intercambiable.
+- [x] Carga Misión2 subconjunto ligero (canales 18-28) desde datos oficiales de Zenodo.
+- [x] Windowed iForest (`subsequence_if`, Isolation Forest estándar vía `pyod`, CPU) corre en Mac sin GPU/Docker y produce score por ventana.
+- [x] Métrica F0.5 event-wise reportada y comparable al baseline publicado por ESA: **0.9487** (referencia 0.949).
+- [x] ⚠️ **Detector intercambiable — reformulado.** No hay una clase `DetectionResult` ni un adapter: eran stubs que nunca se implementaron y se **borraron** (código muerto). La intercambiabilidad se consigue **por construcción**: [2], [3] y [4] consumen SOLO las salidas del detector (score continuo por ventana, los datos ventaneados, y `decision_function` para la atribución), nunca sus internals. Cambiar de detector = regenerar artefactos, no reescribir la capa trustworthy. Una interfaz nominal habría sido ceremonia sin garantía.
 
 **Incertidumbre [2]**
-- [ ] Score crudo convertido en confianza calibrada (conformal/MAPIE o MC-dropout/quantile).
-- [ ] Métrica de calibración reportada.
-- [ ] Salida = etiqueta 0/1 + confianza C + banda U.
-
-> **Decisiones abiertas para el plan de M2** (surgidas al cerrar M1):
-> 1. **Score continuo.** El detector `subsequence_if` emite 0/1 (`predict`), inservible para calibrar. M2 necesita el score **continuo** (`decision_function` del mismo modelo entrenado ya cacheado en `data/cached/model.pkl`). Decidir: generar y cachear `scores_test_continuous` + `scores_train_continuous` (calibración) como primer paso de M2. Es glue nuestro, no toca código de ESA.
-> 2. **Contrato D7 + adapter.** Definir `DetectionResult` (scores + ventana + datos + labels) en `src/interfaces.py` y rellenar `src/m1_detection/adapter.py` para exponerlo a [2][3][4]. Hoy stubs; se concreta cuando M2 fije qué necesita.
+- [x] Score crudo convertido en confianza calibrada: **conformal p-values** propios (no MAPIE, no MC-dropout: el detector no es probabilístico ni tiene dropout).
+- [x] Métrica de calibración reportada: cobertura medida **0.0486** frente al objetivo 0.05, más **0 falsas alarmas en 976.182 ventanas normales** en el punto de operación α* = 2e-5. Tercio final intacto: F0.5 **0.9809**.
+- [x] ⚠️ **Salida = 0/1 + confianza — sin "banda U".** Se emite etiqueta + **p-value conformal** (y su confianza 1-p), que es una garantía *distribution-free* sobre la tasa de falsas alarmas. No se emite una banda de incertidumbre: un detector one-class no da P(anomalía) sin una tasa base, así que una "banda" habría sido un número inventado. La confianza **satura** (~1 en todo evento marcado, por el suelo de α*) y **se reporta como saturada**, nunca como certeza discriminante: para priorizar se usa `priority`.
 
 **Explicabilidad [3]**
-- [ ] Atribución por canal (contribución por feature) por cada detección.
-- [ ] Salida visual + tabular.
+- [x] Atribución por canal (perturbación/ablación) por cada detección. Validada: **hit@1 = 1.0** frente a 0.617 (magnitud) y 0.475 (aleatorio) sobre 120 eventos.
+- [x] Salida visual (heatmap canal × tiempo) + tabular (contexto grounded por evento).
 
 **LLM grounded [4]**
-- [ ] Generador redacta informe SOLO desde ventana+canales+U; dice "no sé" cuando falta señal; sugiere hipótesis etiquetadas, nunca afirma causa no grounded (D4).
-- [ ] Juez LLM-as-judge audita el informe contra los datos y marca/bloquea afirmaciones no soportadas (D5).
-- [ ] Casos "no sé" incluidos a propósito.
+- [x] Generador redacta el brief SOLO desde la evidencia (nombres, palabras cualitativas, duración legible, confianza); las cifras **nunca pasan por el modelo** (viven en tablas verbatim). Hipótesis de acople **etiquetadas como hipótesis no confirmadas**; nunca afirma causa raíz (D4/D3).
+- [x] Dos guardarraíles en serie, veredicto = AND: **precheck** léxico determinista + **juez** LLM-as-judge (D5). Bloquea lo no soportado. Certificado contra un golden de 18 casos etiquetados a mano: precisión 1.0, recall 1.0 (**prueba de existencia**, no garantía estadística). Generador sobre los 120 eventos: 120/120 PASS.
 
 **Demo + README [5]**
-- [ ] Notebook/script reproducible corre [2]+[3]+[4]+[5] desde scores cacheados, sin GPU (D9 nivel Demo).
-- [ ] README completo, legible por recruiter técnico en 3 min.
-- [ ] Seeds fijadas, `requirements.txt`, resultados trazables al dataset.
+- [ ] ⚠️ **Nivel "Demo" desde scores cacheados — RETIRADO.** Sustituido por un **único camino de datos** (decisión del usuario, 2026-07-12): un artefacto se commitea solo si recalcularlo cuesta **dinero o una dependencia externa (API key)**, nunca si solo cuesta **tiempo**. Consecuencia: quien quiere **entender** lee el notebook **horneado** en GitHub (0 setup, 0 datos, 0 key); quien quiere **ejecutar** descarga Zenodo y recomputa en vivo (preproceso ~29 min + train ~11 min, idempotentes). Única excepción committeada: `data/cached/m4_llm_cache.json` (coste = API key + modelo no determinista). *Pendiente: el horneado.*
+- [x] README completo, legible por recruiter técnico: entrada + resultados + quickstart + limitaciones. El deep-dive vive en el notebook, no se duplica.
+- [x] Seeds fijadas (42), `requirements.txt`, resultados trazables al dataset. Suite de regresión verde (56 tests).
 
-**Criterio "hecho":** los 5 componentes corren end-to-end sobre Misión2 ligero, reproducibles, README completo.
+**Criterio "hecho":** los 5 componentes corren end-to-end sobre Misión2 ligero, reproducibles, README completo. **Falta: horneado + clean-room test.**
 
 ## 6. Features detalladas
 
