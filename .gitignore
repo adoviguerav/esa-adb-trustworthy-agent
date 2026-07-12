@@ -189,10 +189,25 @@ cython_debug/
 # ============================================================
 
 # --- Dataset crudo de Zenodo (~3.8 GB) — NUNCA al repo público ---
-# Se ignora todo data/ EXCEPTO los scores cacheados (D9) y el README de descarga.
+# Regla: un artefacto se commitea SOLO si recalcularlo cuesta DINERO o exige una
+# dependencia externa (API key). Si solo cuesta tiempo, se regenera en local.
+# Por tanto se ignora todo data/ excepto el README de descarga y la caché del LLM.
 /data/*
-!/data/cached_scores/
 !/data/README.md
+
+# --- Excepción única: caché de respuestas del LLM (M4) ---
+# Coste de recalcularla = GROQ_API_KEY + un modelo NO determinista.
+# Sin ella, un clon limpio no podría ejecutar las secciones 4 y 5 del notebook
+# offline (cache miss → exige API key) y se rompería la promesa del proyecto:
+# "se reproduce offline, sin muro de pago". Son ~212 KB de JSON: viaja al repo.
+# Ojo: git no puede re-incluir un fichero dentro de un DIRECTORIO excluido, así que
+# hay que desexcluir la cadena entera (directorio → contenido → fichero).
+!/data/cached/
+/data/cached/*
+!/data/cached/m4_llm_cache.json
+# Todo lo demás en data/cached/ (model.pkl 48 MB, scores_continuous.npy 23 MB,
+# split.npz, p_*.npy, m3_*.json, m4_*.json…) se regenera en la máquina del usuario.
+
 # Artefactos intermedios del preproceso (se regeneran)
 preprocessed/
 
