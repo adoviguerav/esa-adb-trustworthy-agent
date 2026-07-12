@@ -61,11 +61,16 @@ def query_weights(context: dict) -> dict:
 
 
 def tversky_similarity(query_w: dict, neigh: set, beta: float) -> float:
-    """Weighted Tversky index (alpha=1, given beta): shared / (union, neighbor extras * beta)."""
+    """Weighted Tversky index (alpha=1, given beta): shared / (union, neighbor extras * beta).
+
+    Sums iterate in SORTED order: float addition is not associative and set iteration
+    order changes per process (hash randomisation) -- unsorted sums made sim differ in
+    the last ulp across runs, breaking reproducibility (and the LLM cache keys).
+    """
     inter = set(query_w) & neigh
     union = set(query_w) | neigh
-    num = sum(query_w[c] for c in inter)
-    den = sum(query_w.get(c, beta) for c in union)  # event channels weighted; extras -> beta
+    num = sum(query_w[c] for c in sorted(inter))
+    den = sum(query_w.get(c, beta) for c in sorted(union))  # event channels weighted; extras -> beta
     return num / den if den else 0.0
 
 
