@@ -46,14 +46,32 @@ def familiarity(novelty: float) -> str:
     return "novel"
 
 
+# SHORT EXPLANATION: the coupling hypothesis is pre-rendered by CODE from
+# shared_relations -- the generator kept mis-assigning which channels share which group
+# (a real judge catch, twice). The model may only repeat this sentence; it never
+# reassembles the relation itself.
+def _coupling_note(shared_relations: dict) -> str:
+    parts = []
+    for rel_kind, groups in shared_relations.items():
+        kind = rel_kind.removeprefix("shared_")  # group / unit
+        for name, channels in groups.items():
+            parts.append(f"{', '.join(channels)} share {name} ({kind})")
+    if not parts:
+        return "no shared groups or physical units among the flagged channels"
+    return ("hypothesis (unconfirmed): " + "; ".join(parts)
+            + " -- a coupled behaviour is possible")
+
+
 def evidence_block(context: dict, retrieval: dict) -> str:
     """The narrative-shaped evidence -- names and words, no precise measurements."""
     view = {
         "event": {
+            "status": "closed -- the detector stopped flagging windows (says nothing "
+                      "about the underlying issue being resolved)",
             "localization": context["localization"],
             "dominant_channels": context["dominant_channels"],
             "all_flagged_channels": [ch for ch, _ in context["top_channels"]],
-            "shared_relations": context["shared_relations"],
+            "coupling_note": _coupling_note(context["shared_relations"]),
             "duration": human_duration(context["duration_sec"]),
             "confidence": f"{100 * context['m2_confidence']:.3f} %",
             "confidence_note": _CONFIDENCE_NOTE,

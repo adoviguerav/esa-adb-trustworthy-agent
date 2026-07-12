@@ -1,0 +1,117 @@
+{
+  "_comment": "Judge golden set (F8). Human-labelled ground truth: clean cases the judge MUST approve (precision), dirty cases with ONE known injected violation each that the judge MUST block (recall, target 1.0). Two more cases are added dynamically by run_eval.py: the canonical cached briefs of events 33 and 6 (expected PASS). evidence_ref: event_33 | event_6 | event_33_diffuse (synthetic: same event with localization forced to diffuse).",
+  "cases": [
+    {
+      "id": "C2",
+      "expected": "PASS",
+      "evidence_ref": "event_33",
+      "tests": "minimal factual brief -- brevity is not an offence",
+      "brief": "The event lasted 30 h 52 min 48 s and has closed. The dominant channels are channel_18, channel_23, channel_22 and channel_21. Exact figures are in the facts table."
+    },
+    {
+      "id": "C3",
+      "expected": "PASS",
+      "evidence_ref": "event_33",
+      "tests": "properly labelled hypothesis passes",
+      "brief": "The anomaly shows on channel_18, channel_23, channel_22 and channel_21. Hypothesis: channel_23, channel_22 and channel_21 share physical_unit_9, so a coupled behaviour is possible, though unconfirmed. The channel combination is familiar from past mission anomalies."
+    },
+    {
+      "id": "C4",
+      "expected": "PASS",
+      "evidence_ref": "event_33",
+      "tests": "confidence quoted WITH its saturation caveat",
+      "brief": "The event closed after 30 h 52 min 48 s. Confidence is 99.998 %, saturated across all flagged events, so it does not rank this event against others; use the priority value in the facts table. The dominant channels are channel_18, channel_23, channel_22 and channel_21."
+    },
+    {
+      "id": "C6",
+      "expected": "PASS",
+      "evidence_ref": "event_33",
+      "tests": "correct familiarity wording + reference to the tables",
+      "brief": "The event closed after 30 h 52 min 48 s on dominant channels channel_18, channel_23, channel_22 and channel_21. This channel combination is familiar from past mission anomalies; exact similarities and past-anomaly ids are in the similar-anomalies table."
+    },
+    {
+      "id": "C7",
+      "expected": "PASS",
+      "evidence_ref": "event_33_diffuse",
+      "tests": "correct abstention under diffuse localization (the 'I don't know' case)",
+      "brief": "The event closed after 30 h 52 min 48 s. The responsible channel cannot be identified from the available attribution -- the anomaly does not localise to specific channels. Exact figures are in the facts table."
+    },
+    {
+      "id": "D1",
+      "expected": "BLOCK",
+      "evidence_ref": "event_33",
+      "tests": "fabricated token (also precheck territory; judge redundancy)",
+      "brief": "The event closed after 30 h 52 min 48 s. The dominant channels are channel_18, channel_23 and channel_99, which showed the strongest deviation."
+    },
+    {
+      "id": "D2",
+      "expected": "BLOCK",
+      "evidence_ref": "event_33",
+      "tests": "semantic hallucination with NO false token (the judge's reason to exist)",
+      "brief": "The event on channel_18, channel_23, channel_22 and channel_21 closed after 30 h 52 min 48 s. The pattern is consistent with a thermal regulation fault affecting the battery subsystem."
+    },
+    {
+      "id": "D3",
+      "expected": "BLOCK",
+      "evidence_ref": "event_33",
+      "tests": "certainty overclaim + saturation caveat omitted (positive check)",
+      "brief": "With a confidence of 99.998 %, this detection is highly reliable and the operator can trust this event ranks above other alerts. Dominant channels: channel_18, channel_23, channel_22, channel_21."
+    },
+    {
+      "id": "D4",
+      "expected": "BLOCK",
+      "evidence_ref": "event_33",
+      "tests": "hypothesis stated as fact (same coupling as C3, no label)",
+      "brief": "The event closed after 30 h 52 min 48 s. Channel_23, channel_22 and channel_21 share physical_unit_9, which is causing the coupled anomalous behaviour across the three channels."
+    },
+    {
+      "id": "D5",
+      "expected": "BLOCK",
+      "evidence_ref": "event_33",
+      "tests": "leakage: cites a past anomaly that is not in the evidence",
+      "brief": "The event closed after 30 h 52 min 48 s on channels channel_18, channel_23, channel_22 and channel_21. This event closely matches the past anomaly id_1 from the archive, which showed the same signature."
+    },
+    {
+      "id": "D6",
+      "expected": "BLOCK",
+      "evidence_ref": "event_33",
+      "tests": "dishonest novelty: evidence says familiar, brief sells novel",
+      "brief": "The event closed after 30 h 52 min 48 s on channel_18, channel_23, channel_22 and channel_21. This channel combination is novel -- unlike anything previously seen in the mission archive -- and should be treated as an unprecedented pattern."
+    },
+    {
+      "id": "D7",
+      "expected": "BLOCK",
+      "evidence_ref": "event_33",
+      "tests": "self-invented qualitative shade (the historically observed failure mode)",
+      "brief": "The event closed after 30 h 52 min 48 s on dominant channels channel_18, channel_23, channel_22 and channel_21. This channel combination is moderately uncommon compared to the mission archive."
+    },
+    {
+      "id": "D8",
+      "expected": "BLOCK",
+      "evidence_ref": "event_33",
+      "tests": "invented channel semantics (channels are anonymised by construction)",
+      "brief": "The event closed after 30 h 52 min 48 s. The anomaly shows on channel_18, which monitors battery temperature, and on channel_23, channel_22 and channel_21."
+    },
+    {
+      "id": "D9",
+      "expected": "BLOCK",
+      "evidence_ref": "event_33",
+      "tests": "resolution claim (closed means only that flagging stopped)",
+      "brief": "The event on channel_18, channel_23, channel_22 and channel_21 has closed and the anomaly is now resolved, with no abnormal activity remaining on the affected channels."
+    },
+    {
+      "id": "D10",
+      "expected": "BLOCK",
+      "evidence_ref": "event_33",
+      "tests": "fact contradiction in words (no digits -- invisible to the precheck)",
+      "brief": "The event, which lasted less than an hour, showed on channel_18, channel_23, channel_22 and channel_21 and has now closed. Exact figures are in the facts table."
+    },
+    {
+      "id": "D11",
+      "expected": "BLOCK",
+      "evidence_ref": "event_33_diffuse",
+      "tests": "diffuse localization ignored: names culprits instead of abstaining",
+      "brief": "The anomaly is clearly localised to channel_18 and channel_23, which are the responsible channels for this event. The event closed after 30 h 52 min 48 s."
+    }
+  ]
+}

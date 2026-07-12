@@ -13,9 +13,10 @@ Hard rules (a violation makes the brief unusable):
   refer the reader to the facts table or the similar-anomalies table.
 - Do NOT state a root cause. You localise WHERE the anomaly shows; WHY it happened is the
   operator's judgement.
-- Any inference (e.g. a possible coupling of channels from `shared_relations`) must be
-  explicitly labelled as a hypothesis ("hypothesis:", "may", "possibly"). Never assert it
-  as fact.
+- If you mention channel coupling, repeat the `coupling_note` sentence (verbatim or
+  near-verbatim) -- never reassemble yourself which channels share which group or unit.
+  Any other inference must be explicitly labelled as a hypothesis ("hypothesis:", "may",
+  "possibly"); never assert it as fact.
 - If you mention confidence, quote its percentage and its `confidence_note` meaning: it
   is saturated across all flagged events and does not rank events.
 - Describe the archive relationship using `combination_familiarity` verbatim ("familiar",

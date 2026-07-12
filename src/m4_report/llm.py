@@ -1,12 +1,14 @@
 """Provider-isolated LLM client (LangChain + Groq) with a cache<->API toggle.
 
-The rest of M4 calls ``structured()`` and never imports the provider directly, so the
-model/provider is swappable behind this one seam (D7 spirit).
+The rest of M4 calls ``text()``/``structured()`` and never imports the provider directly,
+so the model/provider is swappable behind this one seam (D7 spirit).
 
-Toggle ``ESA_LLM_USE_CACHE`` (default "true"):
-  - true  + response cached  -> return the cached structured object (offline, no key).
-  - true  + NOT cached       -> raise: export GROQ_API_KEY + ESA_LLM_USE_CACHE=false.
-  - false + key              -> call the API, cache the result, return it.
+CACHE-FIRST, always: a cached response is returned as-is -- an API run can NEVER re-roll
+an existing canonical entry (an eval once silently regenerated a canonical brief and
+judged the new roll; this semantics closes that hole). Regenerating = deleting the cache
+file, an explicit act. The toggle only decides what a cache MISS does:
+  - ESA_LLM_USE_CACHE=true (default): raise (offline reproducibility, no key needed).
+  - ESA_LLM_USE_CACHE=false: call the API, cache the result, return it.
 
 The committed cache is the CANONICAL reference: an LLM is not bit-deterministic even at
 temperature 0, so a regenerated response may differ slightly (= exploration mode, not a
@@ -56,9 +58,9 @@ def text(system: str, user: str, *, model: str | None = None) -> str:
     key = _key(model, system, user)
     cache = _load()
 
+    if key in cache:  # cache-first ALWAYS: canonical entries are never re-rolled
+        return cache[key]
     if _use_cache():
-        if key in cache:
-            return cache[key]
         raise RuntimeError(
             f"No cached LLM response for key {key} (model={model}). Export "
             f"{config.LLM_API_KEY_ENV} and set ESA_LLM_USE_CACHE=false to generate it "
@@ -86,9 +88,9 @@ def structured(system: str, user: str, schema: type[T], *, model: str | None = N
     key = _key(model, system, user)
     cache = _load()
 
+    if key in cache:  # cache-first ALWAYS: canonical entries are never re-rolled
+        return schema(**cache[key])
     if _use_cache():
-        if key in cache:
-            return schema(**cache[key])
         raise RuntimeError(
             f"No cached LLM response for key {key} (model={model}). Export "
             f"{config.LLM_API_KEY_ENV} and set ESA_LLM_USE_CACHE=false to generate it "
