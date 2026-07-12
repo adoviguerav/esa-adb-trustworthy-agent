@@ -16,7 +16,14 @@ import json
 from pathlib import Path
 
 _DIR = Path(__file__).resolve().parent
-GENERATOR_PROMPT = (_DIR / "generator_prompt.md").read_text()
+
+# PROMPT VERSIONING: a shipped prompt version is NEVER edited -- a change means a new
+# _vN file and bumping the pointer here. Old versions stay reviewable side-by-side and
+# the LLM cache (keyed by prompt content) tells versions apart by construction.
+# v1 -> v2: added the QUOTE-don't-paraphrase rule (4 real paraphrase-drift BLOCKs in the
+# 120-event run: "moderate match", "anomalous window has ended", "coordinated
+# deviation", "reflects its rarity"). v2 re-passed those 4 events: 4/4 PASS.
+GENERATOR_PROMPT = (_DIR / "generator_prompt_v2.md").read_text()
 
 # Familiarity thresholds over novelty (fixed modelling choices, like beta/K in retrieval).
 _FAMILIARITY_BINS = ((0.15, "familiar"), (0.35, "somewhat familiar"))  # else "novel"

@@ -26,7 +26,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # src/ on path
 import config  # noqa: E402
 from m4_report import llm, prompts  # noqa: E402
 
-JUDGE_PROMPT = (Path(prompts.__file__).resolve().parent / "judge_prompt.md").read_text()
+# Same versioning policy as the generator prompt: never edit a shipped version.
+JUDGE_PROMPT = (Path(prompts.__file__).resolve().parent / "judge_prompt_v1.md").read_text()
 
 
 class Verdict(BaseModel):
